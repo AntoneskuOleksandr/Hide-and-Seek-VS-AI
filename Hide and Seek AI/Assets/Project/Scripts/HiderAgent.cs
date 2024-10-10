@@ -5,51 +5,62 @@ using Unity.MLAgents.Actuators;
 
 public class HiderAgent : Agent
 {
-    public float moveSpeed = 5f;
-    public float turnSpeed = 180f;
+    public float moveSpeed = 100f;
     private Rigidbody rBody;
+    private RayPerceptionSensorComponent3D rayPerceptionSensor;
 
     public override void Initialize()
     {
+        rayPerceptionSensor = GetComponent<RayPerceptionSensorComponent3D>();
         rBody = GetComponent<Rigidbody>();
     }
 
     public override void OnEpisodeBegin()
     {
-        // Reset the position and velocity of the agent
-        if (this.transform.localPosition.y < 0)
-        {
-            this.rBody.angularVelocity = Vector3.zero;
-            this.rBody.velocity = Vector3.zero;
-            this.transform.localPosition = new Vector3(0, 0.5f, 0);
-        }
+        this.rBody.angularVelocity = Vector3.zero;
+        this.rBody.velocity = Vector3.zero;
+        this.transform.localPosition = new Vector3(0, 0.5f, 0);
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        // Add agent's velocity to observations
+        // Добавьте наблюдения для скорости агента
         sensor.AddObservation(rBody.velocity.x);
         sensor.AddObservation(rBody.velocity.z);
+
+        // Добавьте наблюдения для позиции агента
+        sensor.AddObservation(this.transform.localPosition);
+
+        // Добавьте наблюдения для позиции Seeker
+        GameObject seeker = GameObject.FindWithTag("Seeker");
+        if (seeker != null)
+        {
+            sensor.AddObservation(seeker.transform.localPosition);
+        }
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        // Actions, size = 2
         float moveX = actionBuffers.ContinuousActions[0];
         float moveZ = actionBuffers.ContinuousActions[1];
 
         Vector3 move = new Vector3(moveX, 0, moveZ) * moveSpeed * Time.deltaTime;
         rBody.AddForce(move, ForceMode.VelocityChange);
 
-        // Rewards
-        float distanceToCenter = Vector3.Distance(this.transform.localPosition, Vector3.zero);
-        if (distanceToCenter < 1.42f)
+        // Награда за время жизни
+        AddReward(0.01f);
+
+        // Получение данных от RayPerceptionSensor3D
+        var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput()).RayOutputs;
+
+        // Проверка расстояния до Seeker с помощью RayPerceptionSensor3D
+        foreach (var rayOutput in rayOutputs)
         {
-            SetReward(1.0f);
-        }
-        else
-        {
-            SetReward(-0.1f);
+            if (rayOutput.HitGameObject.CompareTag("Seeker"))
+            {
+                // Добавление отрицательной награды, если Seeker обнаружен
+                AddReward(-0.01f);
+            }
         }
     }
 
@@ -58,5 +69,16 @@ public class HiderAgent : Agent
         var continuousActionsOut = actionsOut.ContinuousActions;
         continuousActionsOut[0] = Input.GetAxis("Horizontal");
         continuousActionsOut[1] = Input.GetAxis("Vertical");
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // Проверка на касание объекта с тегом "Seeker"
+        if (collision.gameObject.CompareTag("Seeker"))
+        {
+            Debug.Log("Collision With Seeker");
+            AddReward(-1f);
+            EndEpisode();
+        }
     }
 }
