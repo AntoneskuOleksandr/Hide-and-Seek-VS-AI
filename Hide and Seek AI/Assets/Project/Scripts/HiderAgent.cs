@@ -6,8 +6,9 @@ using Unity.MLAgents.Actuators;
 public class HiderAgent : Agent
 {
     public float moveSpeed = 100f;
-    private Rigidbody rBody;
+    public float turnSpeed = 300f;
     private RayPerceptionSensorComponent3D rayPerceptionSensor;
+    private Rigidbody rBody;
 
     public override void Initialize()
     {
@@ -17,49 +18,39 @@ public class HiderAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        this.rBody.angularVelocity = Vector3.zero;
-        this.rBody.velocity = Vector3.zero;
-        this.transform.localPosition = new Vector3(0, 0.5f, 0);
+        transform.localPosition = new Vector3(0, 0.5f, 0);
+        transform.rotation = Quaternion.identity;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        // Добавьте наблюдения для скорости агента
-        sensor.AddObservation(rBody.velocity.x);
-        sensor.AddObservation(rBody.velocity.z);
-
-        // Добавьте наблюдения для позиции агента
-        sensor.AddObservation(this.transform.localPosition);
-
-        // Добавьте наблюдения для позиции Seeker
-        GameObject seeker = GameObject.FindWithTag("Seeker");
-        if (seeker != null)
-        {
-            sensor.AddObservation(seeker.transform.localPosition);
-        }
+        sensor.AddObservation(transform.localPosition);
+        sensor.AddObservation(transform.rotation.y);
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         float moveX = actionBuffers.ContinuousActions[0];
         float moveZ = actionBuffers.ContinuousActions[1];
+        float turn = actionBuffers.ContinuousActions[2]; 
 
         Vector3 move = new Vector3(moveX, 0, moveZ) * moveSpeed * Time.deltaTime;
         rBody.AddForce(move, ForceMode.VelocityChange);
 
-        // Награда за время жизни
+        transform.Rotate(0, turn * turnSpeed * Time.deltaTime, 0);
+
         AddReward(0.01f);
 
-        // Получение данных от RayPerceptionSensor3D
         var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput()).RayOutputs;
 
-        // Проверка расстояния до Seeker с помощью RayPerceptionSensor3D
         foreach (var rayOutput in rayOutputs)
         {
             if (rayOutput.HitGameObject.CompareTag("Seeker"))
             {
-                // Добавление отрицательной награды, если Seeker обнаружен
-                AddReward(-0.01f);
+                float distance = Vector3.Distance(transform.localPosition, rayOutput.HitGameObject.transform.localPosition);
+
+                float penalty = Mathf.Clamp(1 / distance, 0.01f, 1f);
+                AddReward(-penalty);
             }
         }
     }
@@ -69,16 +60,23 @@ public class HiderAgent : Agent
         var continuousActionsOut = actionsOut.ContinuousActions;
         continuousActionsOut[0] = Input.GetAxis("Horizontal");
         continuousActionsOut[1] = Input.GetAxis("Vertical");
+        continuousActionsOut[2] = Input.GetAxis("Mouse X"); 
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        // Проверка на касание объекта с тегом "Seeker"
         if (collision.gameObject.CompareTag("Seeker"))
         {
-            Debug.Log("Collision With Seeker");
-            AddReward(-1f);
+            AddReward(-100f);
             EndEpisode();
+        }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Seeker"))
+        {
+            AddReward(-0.1f);
         }
     }
 }
