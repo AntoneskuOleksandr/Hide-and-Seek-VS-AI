@@ -8,12 +8,18 @@ public class SeekerBetweenPoints : MonoBehaviour
 
     private Vector3 target;
 
-    void Start()
+    private void Start()
     {
+        Reset();
+    }
+
+    public void Reset()
+    {
+        transform.position = pointA.position;
         target = pointB.position;
     }
 
-    void Update()
+    private void Update()
     {
         transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
 
