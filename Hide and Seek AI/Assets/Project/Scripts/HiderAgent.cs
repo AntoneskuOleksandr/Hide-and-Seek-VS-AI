@@ -1,78 +1,87 @@
-using UnityEngine;
-using Unity.MLAgents;
-using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
+using Unity.MLAgents;
+using UnityEngine;
 
 public class HiderAgent : Agent
 {
-    public float moveSpeed = 25f;
-    public float turnSpeed = 300f;
-    private float previousDistance;
+    public float moveSpeed = 3f;
     private RayPerceptionSensorComponent3D rayPerceptionSensor;
     private Rigidbody rBody;
+    private Vector3 lastKnownPosition;
+    private bool seekerVisible;
+    private float distanceToSeeker;
+    private Vector3 nearestObstaclePosition;
 
     public override void Initialize()
     {
         rayPerceptionSensor = GetComponent<RayPerceptionSensorComponent3D>();
         rBody = GetComponent<Rigidbody>();
+        lastKnownPosition = Vector3.zero;
+        seekerVisible = false;
+        distanceToSeeker = 0f;
+        nearestObstaclePosition = Vector3.zero;
     }
 
     public override void OnEpisodeBegin()
     {
-        transform.localPosition = new Vector3(Random.Range(-10f, 10f), 0.5f, -8);
-        transform.rotation = Quaternion.identity;
+        transform.localPosition = new Vector3(Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f));
         rBody.velocity = Vector3.zero;
         rBody.angularVelocity = Vector3.zero;
-        previousDistance = 0;
+        lastKnownPosition = Vector3.zero;
+        seekerVisible = false;
+        distanceToSeeker = 0f;
+        nearestObstaclePosition = Vector3.zero;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
         sensor.AddObservation(transform.localPosition);
-        sensor.AddObservation(transform.rotation.y);
-
-        var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput()).RayOutputs;
-        foreach (var rayOutput in rayOutputs)
-        {
-            sensor.AddObservation(rayOutput.HasHit ? 1.0f : 0.0f);
-            sensor.AddObservation(rayOutput.HitFraction);
-            sensor.AddObservation(rayOutput.HitGameObject ? rayOutput.HitGameObject.CompareTag("Seeker") ? 1.0f : 0.0f : 0.0f);
-        }
+        sensor.AddObservation(rayPerceptionSensor);
+        sensor.AddObservation(transform.InverseTransformPoint(lastKnownPosition));
+        sensor.AddObservation(distanceToSeeker);
+        sensor.AddObservation(transform.InverseTransformPoint(nearestObstaclePosition));
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         float moveX = actionBuffers.ContinuousActions[0];
         float moveZ = actionBuffers.ContinuousActions[1];
-        float turn = actionBuffers.ContinuousActions[2];
-
-        Vector3 move = new Vector3(moveX, 0, moveZ) * moveSpeed;
+        Vector3 move = transform.TransformDirection(new Vector3(moveX, 0, moveZ)) * moveSpeed * 100f * Time.deltaTime;
         rBody.velocity = move;
 
-        transform.Rotate(0, turn * turnSpeed * Time.deltaTime, 0);
+        seekerVisible = false;
+        nearestObstaclePosition = Vector3.zero;
 
-        AddReward(0.5f);
+        var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput(), batched: true).RayOutputs;
 
-        var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput()).RayOutputs;
-
-        foreach (var rayOutput in rayOutputs)
+        foreach (var detectedObject in rayOutputs)
         {
-            if (rayOutput.HasHit)
+            if (detectedObject.HitGameObject != null)
             {
-                if (rayOutput.HitGameObject.CompareTag("Seeker"))
+                if (detectedObject.HitGameObject.CompareTag("Seeker"))
                 {
-                    float distance = Vector3.Distance(transform.localPosition, rayOutput.HitGameObject.transform.localPosition);
-                    float penalty = Mathf.Clamp(1 / distance, 0.01f, 1f);
-                    AddReward(-penalty);
-
-                    if (distance > previousDistance)
-                    {
-                        AddReward(0.1f);
-                    }
-                    previousDistance = distance;
+                    seekerVisible = true;
+                    lastKnownPosition = transform.InverseTransformPoint(detectedObject.HitGameObject.transform.position);
+                    distanceToSeeker = Vector3.Distance(transform.position, detectedObject.HitGameObject.transform.position);
+                    AddReward(-0.5f / distanceToSeeker);
+                }
+                else if (detectedObject.HitGameObject.CompareTag("Obstacle"))
+                {
+                    nearestObstaclePosition = transform.InverseTransformPoint(detectedObject.HitGameObject.transform.position);
                 }
             }
         }
+        if (!seekerVisible)
+        {
+            AddReward(0.01f);
+        }
+
+        if (nearestObstaclePosition != Vector3.zero && Vector3.Distance(transform.position, nearestObstaclePosition) < 1.0f)
+        {
+            AddReward(0.1f);
+        }
+        AddReward(0.1f);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -80,14 +89,13 @@ public class HiderAgent : Agent
         var continuousActionsOut = actionsOut.ContinuousActions;
         continuousActionsOut[0] = Input.GetAxis("Horizontal");
         continuousActionsOut[1] = Input.GetAxis("Vertical");
-        continuousActionsOut[2] = Input.GetAxis("Mouse X");
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Seeker"))
         {
-            AddReward(-10f);
+            AddReward(-100f);
             EndEpisode();
         }
     }

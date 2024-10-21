@@ -5,8 +5,7 @@ using Unity.MLAgents.Actuators;
 
 public class SeekerAgent : Agent
 {
-    [SerializeField] private GameObject hider;
-    public float moveSpeed = 25f;
+    public float moveSpeed = 3f;
     private RayPerceptionSensorComponent3D rayPerceptionSensor;
     private Rigidbody rBody;
     private Vector3 lastKnownPosition;
@@ -24,8 +23,7 @@ public class SeekerAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        transform.localPosition = new Vector3(0f, 0.5f, 0f);
-        hider.transform.localPosition = new Vector3(Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f));
+        transform.localPosition = Vector3.zero;
         rBody.velocity = Vector3.zero;
         rBody.angularVelocity = Vector3.zero;
         lastKnownPosition = Vector3.zero;
@@ -37,7 +35,7 @@ public class SeekerAgent : Agent
     {
         sensor.AddObservation(transform.localPosition);
         sensor.AddObservation(rayPerceptionSensor);
-        sensor.AddObservation(lastKnownPosition);
+        sensor.AddObservation(transform.InverseTransformPoint(lastKnownPosition));
         sensor.AddObservation(distanceToHider);
     }
 
@@ -45,32 +43,25 @@ public class SeekerAgent : Agent
     {
         float moveX = actionBuffers.ContinuousActions[0];
         float moveZ = actionBuffers.ContinuousActions[1];
-
-        Vector3 move = new Vector3(moveX, 0, moveZ) * moveSpeed * 100f * Time.deltaTime;
+        Vector3 move = transform.TransformDirection(new Vector3(moveX, 0, moveZ)) * moveSpeed * 100f * Time.deltaTime;
         rBody.velocity = move;
-
         hiderVisible = false;
-
-        var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput()).RayOutputs;
+        var rayOutputs = RayPerceptionSensor.Perceive(rayPerceptionSensor.GetRayPerceptionInput(), batched: true).RayOutputs;
         foreach (var detectedObject in rayOutputs)
         {
             if (detectedObject.HitGameObject != null && detectedObject.HitGameObject.CompareTag("Hider"))
             {
                 hiderVisible = true;
-                lastKnownPosition = detectedObject.HitGameObject.transform.position;
+                lastKnownPosition = transform.InverseTransformPoint(detectedObject.HitGameObject.transform.position);
                 distanceToHider = Vector3.Distance(transform.position, detectedObject.HitGameObject.transform.position);
-
-                AddReward(0.1f / distanceToHider);
-
+                AddReward(0.5f / distanceToHider);
                 break;
             }
         }
-
         if (!hiderVisible)
         {
             AddReward(-0.01f);
         }
-
         AddReward(-0.1f);
     }
 

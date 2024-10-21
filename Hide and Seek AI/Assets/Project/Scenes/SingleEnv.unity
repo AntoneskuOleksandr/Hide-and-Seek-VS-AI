@@ -316,6 +316,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Environment
       objectReference: {fileID: 0}
+    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: m_BrainParameters.VectorObservationSize
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: m_BrainParameters.NumStackedVectorObservations
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: 'm_BrainParameters.VectorActionSize.Array.data[0]'
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: m_BrainParameters.m_ActionSpec.m_NumContinuousActions
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7872065854364396913, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -355,6 +371,18 @@ PrefabInstance:
     - target: {fileID: 7872065854364396913, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7894457692639403574, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: m_BrainParameters.VectorObservationSize
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 7894457692639403574, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: 'm_BrainParameters.VectorActionSize.Array.data[0]'
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7894457692639403574, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: m_BrainParameters.m_ActionSpec.m_NumContinuousActions
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
