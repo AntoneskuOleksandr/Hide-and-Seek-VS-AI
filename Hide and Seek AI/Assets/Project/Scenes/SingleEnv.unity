@@ -204,13 +204,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 35, z: 0}
+  m_LocalRotation: {x: 0.3045812, y: -0, z: -0, w: 0.95248646}
+  m_LocalPosition: {x: 0, y: 16.85, z: -23.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 35.466, y: 0, z: 0}
 --- !u!1 &1314125419
 GameObject:
   m_ObjectHideFlags: 0
@@ -312,25 +312,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 280477925669235420, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: moveSpeed
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1203286324925479943, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
+      propertyPath: m_MaxRayDegrees
+      value: 180
+      objectReference: {fileID: 0}
     - target: {fileID: 3196356428437134284, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
       propertyPath: m_Name
       value: Environment
       objectReference: {fileID: 0}
     - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: m_BrainParameters.VectorObservationSize
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: m_BrainParameters.NumStackedVectorObservations
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: 'm_BrainParameters.VectorActionSize.Array.data[0]'
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4515969273270540088, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: m_BrainParameters.m_ActionSpec.m_NumContinuousActions
-      value: 2
+      propertyPath: m_Model
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7872065854364396913, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
       propertyPath: m_LocalPosition.x
@@ -373,16 +369,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7894457692639403574, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: m_BrainParameters.VectorObservationSize
-      value: 11
-      objectReference: {fileID: 0}
-    - target: {fileID: 7894457692639403574, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: 'm_BrainParameters.VectorActionSize.Array.data[0]'
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7894457692639403574, guid: f751b370320b5244ea8efb0fba2c13f3, type: 3}
-      propertyPath: m_BrainParameters.m_ActionSpec.m_NumContinuousActions
-      value: 2
+      propertyPath: m_Model
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
